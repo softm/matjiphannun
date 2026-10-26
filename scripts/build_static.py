@@ -1,8 +1,13 @@
 from pathlib import Path
-import shutil
+import shutil, time
 root=Path(__file__).resolve().parent.parent
 out=root/'dist'
-if out.exists():shutil.rmtree(out)
+if out.exists():
+ for attempt in range(4):
+  try:shutil.rmtree(out);break
+  except OSError:
+   if attempt==3:raise
+   time.sleep(0.1)
 out.mkdir()
 for name in ['index.html','data-status.html','styles.css','app.js','config.js','sw.js','manifest.webmanifest','lib','assets','data']:
  p=root/name

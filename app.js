@@ -1,7 +1,7 @@
-import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261027b';
-import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261027b';
-import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js?v=20261027b';
-import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261027b';
+import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261027c';
+import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261027c';
+import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js?v=20261027c';
+import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261027c';
 
 const $ = selector => document.querySelector(selector);
 const state = {
@@ -49,6 +49,7 @@ async function createMap() {
   $('#map').innerHTML='<div class="map-error"><div class="loading-ring"></div><strong>네이버 지도를 불러오는 중입니다.</strong></div>';
   try {
     await loadNaverMaps();
+    $('#map').innerHTML='';
     state.map = new RestaurantMap('map', state.location, id => openDetail(id, {fromMap:true}));
     placeOriginMarker(); renderMarkers();
   } catch(error) {
@@ -373,7 +374,7 @@ async function boot(){
     const placeId=params.get('place');if(placeId&&state.places.some(p=>p.id===placeId))openDetail(placeId);
   }else await useCurrentPosition(true);
   if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('androidplatform.net')){
-    navigator.serviceWorker.register('./sw.js?v=20261027b').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=20261027c').catch(()=>{});
   }
 }
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});
