@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f8f6ef">
+  <meta name="description" content="맛집을 나열하지 않고, 오늘 내 상황에 맞는 한 끼를 찾아줍니다. 지도 기반 추천, 근거 공개, 개인 맛집 기록.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./styles.css">
+  <title>맛집한눈 · 오늘의 한 끼, 고민 끝</title>
+</head>
+<body>
+<div class="app-shell" id="app">
+  <main class="map-region" aria-label="맛집 지도">
+    <div id="map" class="real-map" role="application" aria-label="주변 음식점 지도"></div>
+    <div class="map-topbar">
+      <div class="map-topbar-brand"><span class="mini-logo">🍜</span><strong>맛집한눈</strong><span class="mini-beta">BETA</span></div>
+      <button class="map-topbar-location" id="mobile-location" type="button">📍 위치 선택</button>
+    </div>
+    <div class="map-controls">
+      <button id="search-map-area" class="map-query-btn" type="button" title="지도 중심으로 다시 검색">↻ 이 지역 다시 검색</button>
+      <button id="map-my-location" class="map-fab" type="button" title="현재 위치 찾기" aria-label="현재 위치 찾기">⌾</button>
+    </div>
+    <div class="map-bottom-caption">지도: © OpenStreetMap 기여자 · 장소 데이터: OSM</div>
+  </main>
+  <section id="sheet" class="content-panel" aria-label="맛집 추천 목록" data-level="compact">
+    <div class="sheet-drag-zone" id="sheet-handle" aria-label="목록 펼침 크기 조절" role="slider" tabindex="0" aria-valuemin="25" aria-valuemax="90" aria-valuenow="54"><div class="sheet-handle"></div></div>
+    <div class="panel-head">
+      <div class="brand-title">
+        <div class="app-logo">🍜</div>
+        <div><div class="app-logo-text">맛집한눈<span class="logo-dot">.</span></div><div class="brand-tagline">TASTE, MADE SIMPLE.</div></div>
+        <button class="circle-button desktop-settings" id="settings-open" type="button" aria-label="설정과 백업" title="설정과 백업">⚙</button>
+      </div>
+      <div class="location-box">
+        <div class="location-symbol">⌖</div>
+        <div class="location-main"><div class="subdued-label">지금 탐색하는 동네</div><strong id="location-label">위치 확인 중...</strong></div>
+        <button type="button" id="location-edit" class="location-change">변경 <span aria-hidden="true">›</span></button>
+      </div>
+      <div class="headline-zone">
+        <div class="eyebrow"><span class="live-dot"></span> TODAY'S GOOD FOOD</div>
+        <h1>오늘 뭐 먹지?<br><em>여기서 끝.</em></h1>
+        <p>내 주변 식당을 찾고, 왜 추천하는지도 확인하세요.</p>
+      </div>
+      <form id="search-form" class="search-box" role="search">
+        <span class="search-icon">⌕</span>
+        <input id="restaurant-search" type="search" enterkeyhint="search" placeholder="식당 이름, 음식 종류 검색" aria-label="식당 검색" autocomplete="off">
+        <button class="search-submit" type="submit">검색</button>
+      </form>
+      <div class="filter-title"><strong>지금 어떤 한 끼가 당기세요?</strong><span>상황 맞춤 추천</span></div>
+      <div class="context-scroll" id="context-chips" role="group" aria-label="식사 상황"></div>
+      <div class="filters-line">
+        <div class="category-scroll" id="category-chips" role="group" aria-label="업종 필터"></div>
+        <button class="small-select" type="button" id="radius-button" title="검색 반경">반경 2.4km⌄</button>
+      </div>
+      <div class="insight-card" id="insight-card">
+        <div class="insight-icon">✦</div><div><strong>한눈 인사이트</strong><p>주변 식당 데이터를 확인하고 있어요.</p></div>
+      </div>
+      <div class="section-title-row"><div><div class="section-title">내 주변 추천 <span id="result-count" class="result-count">—</span></div><p id="data-indicator" class="data-indicator">데이터 확인 중</p></div>
+        <select id="sort-select" class="sort-select" aria-label="정렬 기준"><option value="fit">맞춤 순</option><option value="distance">가까운 순</option><option value="saved">저장 우선</option></select>
+      </div>
+    </div>
+    <div id="restaurant-list" class="restaurant-list" aria-live="polite"><div class="list-loading"><div class="loading-ring"></div>주변 식당 정보를 불러오고 있어요.</div></div>
+    <div class="panel-footer"><p>※ 추천 점수는 위치·업종·기록 기반의 적합도이며 맛·위생등급이 아닙니다.</p><div><a href="./data-status.html">데이터 현황</a><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">데이터 출처</a><button id="settings-footer" type="button">내 기록 · 백업</button></div></div>
+  </section>
+  <div id="map-loader" class="map-loader is-visible"><div class="loading-ring"></div><div>내 주변 식당을 찾는 중<span class="map-loader-detail">실제 등록된 장소 데이터만 표시합니다</span></div></div>
+  <div class="toast" id="toast" aria-live="polite" role="status"></div>
+</div>
+<dialog id="detail-dialog" class="detail-dialog" aria-label="음식점 상세 정보"><div id="detail-content"></div></dialog>
+<dialog id="location-dialog" class="modal-dialog" aria-label="위치 선택">
+  <div class="modal-top"><div><div class="eyebrow">EXPLORE ANYWHERE</div><h2>어디서 찾을까요?</h2></div><button type="button" class="dialog-close" data-close="location-dialog" aria-label="닫기">×</button></div>
+  <p class="modal-desc">현재 위치를 사용하거나, 동네·지역명을 입력해 직접 선택하세요.</p>
+  <button id="location-use-current" type="button" class="full-action">⌖ 현재 위치에서 찾기 <span>›</span></button>
+  <form id="location-form" class="modal-search-row"><input id="location-query" type="text" placeholder="예: 서울 성수동, 충남 서산시" minlength="2" maxlength="120" required aria-label="동네나 주소 검색"><button type="submit">검색</button></form>
+  <p class="hint-text">입력 완료 후 검색합니다. 자동완성·무단 위치 추적은 사용하지 않습니다.</p>
+  <div id="location-search-results" class="location-results"></div>
+  <div class="modal-divider"></div>
+  <div class="modal-subheading">내가 저장한 동네 <button type="button" id="save-current-location">+ 현재 탐색 위치 저장</button></div>
+  <div id="saved-location-list" class="location-results"></div>
+</dialog>
+<dialog id="settings-dialog" class="modal-dialog" aria-label="내 기록과 백업">
+  <div class="modal-top"><div><div class="eyebrow">PRIVATE BY DEFAULT</div><h2>내 맛집 기록</h2></div><button type="button" class="dialog-close" data-close="settings-dialog" aria-label="닫기">×</button></div>
+  <p class="modal-desc">즐겨찾기, 개인 평가, 방문 메모는 이 기기에만 저장됩니다. 외부 전송은 하지 않습니다.</p>
+  <div class="settings-grid"><div><small>저장한 식당</small><strong id="saved-count">0</strong></div><div><small>개인 평가 기록</small><strong id="reviews-count">0</strong></div></div>
+  <label class="switch-row"><span>저장한 식당만 보기</span><input type="checkbox" id="favorites-only"></label>
+  <button type="button" id="export-data" class="full-action">⇩ 내 데이터 JSON 백업 <span>›</span></button>
+  <label class="full-action import-label">⇧ 백업 JSON 불러오기 <span>›</span><input type="file" id="import-data" accept="application/json,.json" hidden></label>
+  <p class="hint-text">백업을 가져오면 현재 즐겨찾기와 기록을 대체합니다. 저장소를 삭제하면 로컬 기록이 사라집니다.</p>
+  <div class="modal-divider"></div>
+  <h3 class="modal-subheading">데이터 안내</h3>
+  <p class="hint-text">장소: OpenStreetMap 기여자 제공 · 영업시간, 메뉴 가격, 리뷰, 위생 상태는 확인된 정보만 표시합니다. 공개 Overpass/Nominatim 서버는 시범 운영용이며 트래픽이 증가하면 별도 데이터 인프라로 전환해야 합니다.</p>
+</dialog>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="./app.js" type="module"></script>
+</body>
+</html>

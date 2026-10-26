@@ -1,0 +1,18 @@
+<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#195a42"><title>맛집한눈 · 데이터 현황</title><style>
+:root{font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;color:#17372e;background:#f8f6ef}*{box-sizing:border-box}body{max-width:860px;margin:0 auto;padding:32px 18px}a{color:#1c654b}header{display:flex;justify-content:space-between;align-items:center;gap:20px}h1{font-size:28px;letter-spacing:-1px;margin:25px 0 8px}p{color:#6a806e;line-height:1.7;font-size:14px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:26px 0}.card{background:#fff;border:1px solid #e0e9e0;border-radius:16px;padding:21px}.card .label{font-size:12px;color:#789181}.card strong{display:block;font-size:27px;margin-top:13px}.card small{color:#91a293}.box{background:#fff;border:1px solid #e1e9e2;border-radius:18px;padding:21px;margin-top:14px}ul{line-height:2;color:#567361;font-size:14px;padding-left:22px}small{color:#98aa9d}button{border:0;background:#1c654b;color:white;padding:10px 14px;border-radius:10px;cursor:pointer}@media(max-width:600px){.cards{grid-template-columns:1fr}}
+</style></head><body>
+<header><a href="./" style="font-weight:800;text-decoration:none">🍜 맛집한눈</a><a href="./">앱으로 돌아가기 ↗</a></header>
+<div style="font-size:12px;letter-spacing:2px;color:#b9834a;font-weight:800;margin-top:28px">DATA TRANSPARENCY</div><h1>데이터 수집 현황</h1>
+<p>현재는 공식 통합 수집 서버가 없는 초기 시제품입니다. 아래 수치는 <b>이 브라우저에 마지막으로 임시 저장한 식당 데이터</b>이며 전국 총 업소 수 또는 전체 수집률이 아닙니다.</p>
+<div class="cards"><div class="card"><div class="label">브라우저 임시 저장 장소</div><strong id="total">—</strong><small>지역별 캐시 최대 한 곳</small></div><div class="card"><div class="label">마지막 조회</div><strong id="last" style="font-size:18px">—</strong><small>조회 시각</small></div><div class="card"><div class="label">최근 조회 중심</div><strong id="origin" style="font-size:17px;word-break:break-all">—</strong><small>좌표·반경 캐시 키</small></div></div>
+<div class="box"><h3>지금 실제로 연결된 데이터</h3><ul><li>음식점·카페·간편식: OpenStreetMap Overpass API (사용자 조회 시)</li><li>지역명 선택: Nominatim (검색·현 위치 조회 시)</li><li>지도 타일: OpenStreetMap 기여자</li><li>즐겨찾기·개인 별점·메모: 내 기기 LocalStorage (수집 서버 없음)</li></ul></div>
+<div class="box"><h3>운영 데이터 상태</h3><ul><li>전국 음식점 인허가·휴폐업: <b>미연동</b></li><li>식약처 위생등급: <b>미연동</b></li><li>메뉴 가격/리뷰/예약: <b>미연동</b></li><li>일별 전국 데이터 수집/커버리지 추적: <b>미구현</b></li></ul><p>운영 단계에는 전국 데이터 공급처별 전체·수집·변경·오류 건수를 분리하고 데이터 기준일 및 라이선스를 표시합니다.</p></div>
+<p style="margin-top:26px"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a> · <a href="https://operations.osmfoundation.org/policies/nominatim/" target="_blank" rel="noopener">검색 서비스 사용 정책</a></p>
+<script type="module">
+import { readStore } from './lib/storage.js';
+import { formatDateTime } from './lib/domain.js';
+const cache=readStore('poiCache');
+document.getElementById('total').textContent=Array.isArray(cache.places)?cache.places.length.toLocaleString('ko-KR')+'곳':'0곳';
+document.getElementById('last').textContent=cache.timestamp?formatDateTime(cache.timestamp):'조회 기록 없음';
+document.getElementById('origin').textContent=cache.key||'미조회';
+</script></body></html>

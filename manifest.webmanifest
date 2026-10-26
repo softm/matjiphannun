@@ -1,0 +1,1 @@
+{"name":"맛집한눈 — 오늘의 한 끼, 고민 끝","short_name":"맛집한눈","description":"내 상황에 맞는 식당을 지도에서 찾고, 개인 방문 기록을 저장합니다.","start_url":"./","scope":"./","display":"standalone","background_color":"#f8f6ef","theme_color":"#195a42","lang":"ko","icons":[{"src":"./assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
