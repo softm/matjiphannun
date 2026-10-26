@@ -1,0 +1,63 @@
+{
+  "invalidCoordinates": {
+    "sbiz": 0,
+    "tour": 0
+  },
+  "coverage": {
+    "sbiz": "national",
+    "sbizNote": "공식 시도별 CSV 전체 수집",
+    "tour": "national-listed-restaurants",
+    "tourSourceTotal": 13409,
+    "tourCollected": 13409,
+    "food": "national",
+    "sbizFileSnapshot": {
+      "files": 16,
+      "allIndustriesRows": 2772484,
+      "foodRows": 840255,
+      "regionCounts": {
+        "소상공인시장진흥공단_상가(상권)정보_강원_202606.csv": 37719,
+        "소상공인시장진흥공단_상가(상권)정보_경기_202606.csv": 185804,
+        "소상공인시장진흥공단_상가(상권)정보_경남_202606.csv": 63495,
+        "소상공인시장진흥공단_상가(상권)정보_경북_202606.csv": 52361,
+        "소상공인시장진흥공단_상가(상권)정보_대구_202606.csv": 37977,
+        "소상공인시장진흥공단_상가(상권)정보_대전_202606.csv": 23850,
+        "소상공인시장진흥공단_상가(상권)정보_부산_202606.csv": 53716,
+        "소상공인시장진흥공단_상가(상권)정보_서울_202606.csv": 141126,
+        "소상공인시장진흥공단_상가(상권)정보_세종_202606.csv": 5034,
+        "소상공인시장진흥공단_상가(상권)정보_울산_202606.csv": 19736,
+        "소상공인시장진흥공단_상가(상권)정보_인천_202606.csv": 40973,
+        "소상공인시장진흥공단_상가(상권)정보_전남광주_202606.csv": 55881,
+        "소상공인시장진흥공단_상가(상권)정보_전북_202606.csv": 31006,
+        "소상공인시장진흥공단_상가(상권)정보_제주_202606.csv": 19746,
+        "소상공인시장진흥공단_상가(상권)정보_충남_202606.csv": 40476,
+        "소상공인시장진흥공단_상가(상권)정보_충북_202606.csv": 31355
+      },
+      "sourceDate": "2026-06-30"
+    }
+  },
+  "sourceCounts": {
+    "sbiz": 840255,
+    "tour": 13409,
+    "C004": 46894
+  },
+  "matching": {
+    "tourMatches": 3535,
+    "hygieneMatches": 1003,
+    "foodValid": 45289
+  },
+  "limitations": [
+    "현재 영업 여부·메뉴 가격·리뷰는 미확인",
+    "사진·위생정보는 확인된 해당 업소 자료만 표시",
+    "관광공사 목록은 전국의 모든 식당 목록이 아님"
+  ],
+  "generatedAt": "2026-10-27T02:57:45+09:00",
+  "total": 850129,
+  "withCoordinates": 850129,
+  "withPhotos": 9444,
+  "withHygiene": 1003,
+  "sources": {
+    "sbiz": "https://www.data.go.kr/data/15012005/openapi.do",
+    "tour": "https://www.data.go.kr/data/15101578/openapi.do",
+    "food": "https://www.foodsafetykorea.go.kr/api/openApiInfo.do?svc_no=C004&menu_grp=MENU_GRP31&menu_no=661"
+  }
+}

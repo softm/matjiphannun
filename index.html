@@ -7,8 +7,6 @@
   <meta name="description" content="맛집을 나열하지 않고, 오늘 내 상황에 맞는 한 끼를 찾아줍니다. 지도 기반 추천, 근거 공개, 개인 맛집 기록.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
-  <link rel="preconnect" href="https://tile.openstreetmap.org">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="./styles.css">
   <title>맛집한눈 · 오늘의 한 끼, 고민 끝</title>
 </head>
@@ -24,9 +22,9 @@
       <button id="search-map-area" class="map-query-btn" type="button" title="지도 중심으로 다시 검색">↻ 이 지역 다시 검색</button>
       <button id="map-my-location" class="map-fab" type="button" title="현재 위치 찾기" aria-label="현재 위치 찾기">⌾</button>
     </div>
-    <div class="map-bottom-caption">지도: © OpenStreetMap 기여자 · 장소 데이터: OSM</div>
+    <div class="map-bottom-caption">지도: NAVER · 장소: 소상공인시장진흥공단·한국관광공사</div>
   </main>
-  <section id="sheet" class="content-panel" aria-label="맛집 추천 목록" data-level="compact">
+  <section id="sheet" class="content-panel" aria-label="맛집 추천 목록" data-level="expanded">
     <div class="sheet-drag-zone" id="sheet-handle" aria-label="목록 펼침 크기 조절" role="slider" tabindex="0" aria-valuemin="25" aria-valuemax="90" aria-valuenow="54"><div class="sheet-handle"></div></div>
     <div class="panel-head">
       <div class="brand-title">
@@ -63,7 +61,7 @@
       </div>
     </div>
     <div id="restaurant-list" class="restaurant-list" aria-live="polite"><div class="list-loading"><div class="loading-ring"></div>주변 식당 정보를 불러오고 있어요.</div></div>
-    <div class="panel-footer"><p>※ 추천 점수는 위치·업종·기록 기반의 적합도이며 맛·위생등급이 아닙니다.</p><div><a href="./data-status.html">데이터 현황</a><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">데이터 출처</a><button id="settings-footer" type="button">내 기록 · 백업</button></div></div>
+    <div class="panel-footer"><p>※ 추천 점수는 위치·업종·기록 기반의 적합도이며 맛·위생등급이 아닙니다.</p><div><a href="./data-status.html">데이터 현황</a><a href="./data-status.html#sources" target="_blank" rel="noopener noreferrer">데이터 출처</a><button id="settings-footer" type="button">내 기록 · 백업</button></div></div>
   </section>
   <div id="map-loader" class="map-loader is-visible"><div class="loading-ring"></div><div>내 주변 식당을 찾는 중<span class="map-loader-detail">실제 등록된 장소 데이터만 표시합니다</span></div></div>
   <div class="toast" id="toast" aria-live="polite" role="status"></div>
@@ -90,9 +88,8 @@
   <p class="hint-text">백업을 가져오면 현재 즐겨찾기와 기록을 대체합니다. 저장소를 삭제하면 로컬 기록이 사라집니다.</p>
   <div class="modal-divider"></div>
   <h3 class="modal-subheading">데이터 안내</h3>
-  <p class="hint-text">장소: OpenStreetMap 기여자 제공 · 영업시간, 메뉴 가격, 리뷰, 위생 상태는 확인된 정보만 표시합니다. 공개 Overpass/Nominatim 서버는 시범 운영용이며 트래픽이 증가하면 별도 데이터 인프라로 전환해야 합니다.</p>
+  <p class="hint-text">지도·주소 검색: 네이버 Maps. 장소: 소상공인시장진흥공단·한국관광공사, 위생정보: 식품의약품안전처. 영업시간은 방문 전 확인해 주세요. 위치 권한을 허용하거나 주소를 검색할 때 좌표·검색어가 네이버로 전송됩니다. 즐겨찾기와 방문기록은 이 기기에 보관합니다.</p>
 </dialog>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="./app.js" type="module"></script>
 </body>
 </html>

@@ -1,0 +1,54 @@
+name: Refresh restaurant data
+on:
+  schedule:
+    - cron: '15 18 * * *' # 매일 03:15 KST
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: restaurant-data
+  cancel-in-progress: false
+jobs:
+  collect:
+    # Enable after the two collector Secrets have been registered.
+    if: ${{ vars.RESTAURANT_DATA_REFRESH_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Collect and validate all sources
+        env:
+          DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
+          FOODSAFETY_API_KEY: ${{ secrets.FOODSAFETY_API_KEY }}
+        run: python3 scripts/collect_data.py --cache '${{ runner.temp }}/restaurant-collection'
+      - name: Commit validated public data
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'data: refresh public restaurant snapshot'
+          git push
+      # GITHUB_TOKEN pushes do not trigger another workflow, so deploy in this run.
+      - run: python3 scripts/build_static.py
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+        id: deployment
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}

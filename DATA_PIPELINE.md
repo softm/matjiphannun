@@ -1,6 +1,6 @@
 # 맛집한눈 데이터 연동 설계 v0.2
 
-2026-10-27 · 지도: 네이버 Maps · 상태: 설계, 발급 현황은 API_ISSUANCE.md 참조
+2026-10-27 · 지도: 네이버 Maps · 수집기·공개 데이터 조회 구현. 발급·검증 현황은 API_ISSUANCE.md 참조
 
 ## 1. 공급자와 역할
 
@@ -12,7 +12,7 @@
 | TourAPI | 음식점 사진·소개·제공되는 상세정보 | 허용된 콘텐츠·출처·사진별 이용조건 | 수집기 Secret |
 | 네이버 Maps | 지도 표시·주소 좌표변환 | 지도 SDK 표출, 허용 범위 내 위치 결과 | Web Client ID / 서버 Client Secret |
 
-현재 OSM Overpass 조회와 Nominatim 주소 조회는 시제품용이다. 새 데이터가 검증될 때까지 정상 운영용 전국 데이터가 있는 것으로 표시하지 않는다. 지도 전환 시 공공 식당 데이터가 없다는 이유로 타사 지도를 암묵적으로 표시하지 않는다.
+OSM Overpass·Nominatim 실시간 의존을 제거했다. 지도와 주소 검색은 네이버 Maps 공식 SDK, 식당 조회는 수집한 지역별 공개 JSON을 사용한다. 데이터가 없는 지역은 수집 범위를 안내한다.
 
 ## 2. 초기 수집과 갱신
 
@@ -61,7 +61,7 @@
 | `data/regions/*.json` | 지역별 식당 최소 필드와 필요한 콘텐츠 |
 | `data/status.json` | 원천 응답·처리·좌표·사진·위생·매칭·오류 수 |
 | GitHub Actions Secrets | `DATA_GO_KR_SERVICE_KEY`, `FOODSAFETY_API_KEY` |
-| 서버 환경변수 | `NAVER_MAPS_CLIENT_ID`, `NAVER_MAPS_CLIENT_SECRET` |
+| Web SDK 공개 설정 | `config.js`의 도메인 제한 Client ID. 주소 검색·역지오코딩도 공식 Geocoder 서브 모듈을 사용하므로 Secret을 클라이언트에 넣지 않음 |
 | 프론트 공개 설정 | 네이버 Web SDK용 Client ID 및 데이터 manifest URL. 비밀키는 포함하지 않음 |
 
 인증키가 URL에 포함되는 공공 API 요청은 전체 URL·예외 객체·raw 응답에 포함된 키를 로그에 남기지 않는다. 키 값은 문서·커밋·브라우저 스크린샷·APK에서 제외한다. 필요한 인증정보는 서비스 콘솔과 Secrets에서만 관리한다.
@@ -91,4 +91,4 @@
 | 장애 | 원천 실패 후 이전 manifest와 목록 유지, 미확인을 0건으로 오인하지 않음 |
 | 지도 | 운영 도메인과 Android에서 마커·라벨·시트 크기 조절·현위치·주소 표시 검증 |
 
-이 문서는 연동 명세이다. 수집기·정적 데이터·네이버 지도 전환을 구현 완료했다는 보고가 아니다.
+수집기 `scripts/collect_data.py`, 네이버 지도 `lib/naver-map.js`, 정적 데이터 조회 `lib/providers.js`를 구현했다. 공개 JSON은 지역별 gzip 압축을 Base64로 감싼 JSON이며 브라우저에서 `DecompressionStream`으로 읽는다. 실제 정규화 건수·수집 범위는 `data/status.json`을 따른다. 자동 갱신용 Secrets·활성화 변수와 Android 실기기 검증은 별도 상태로 관리한다.

@@ -1,65 +1,62 @@
 # 맛집한눈 (matjiphannun)
 
-> 맛집을 나열하지 않고, 오늘 내 상황에 맞는 한 끼를 추천한다.
+[맛집한눈 웹](https://softm.github.io/matjiphannun/) · [데이터 현황](https://softm.github.io/matjiphannun/data-status.html) · [기획서](PRODUCT_SPEC.md) · [연동 설계](DATA_PIPELINE.md)
 
-**모바일 지도 집중모드 + 상황 적합도 설명 + 내 맛집 기록**을 결합한 로컬 퍼스트 PWA 시제품입니다.
+네이버 지도 위에 공식 식당 정보를 연결한 로컬 기록 중심 웹·Android 앱입니다.
 
-## 지금 동작하는 기능
+## 구현 기능
 
-- 권한 동의 기반 초기 내 위치 탐색, 거절 시 기본 탐색 위치 표시 (현위치로 속이지 않음)
-- 동네/주소 검색(명시적 버튼), 현재 탐색 위치 저장/선택/삭제
-- 지도에서 위치 이동 후 '이 지역 다시 검색', 1/2.4/5km 반경 선택
-- OpenStreetMap Overpass 주변 식당·카페·간편식 실제 POI 검색 (모의 맛집 데이터 없음)
-- 검색·카테고리·혼밥/간편식/여유로운 식사/카페 상황·거리/맞춤 정렬
-- 사용자 상황 **적합도**와 사용 근거 공개 (맛 평점이 아님)
-- 목록과 지도 마커 선택 연동, 추천 TOP5 마커 구분, 모바일 드래그 핸들 (27/54/90% 높이)
-- 카카오 지도/Google 지도 길찾기, 전화, 공유, OSM 출처 링크
-- 기기 내부 즐겨찾기/본인만의 별점/방문 메모; JSON 내보내기/가져오기
-- installable PWA manifest, 정적 자산 오프라인 캐시, GitHub Pages workflow
+- 네이버 Maps 지도·추천 TOP5 마커·이름 라벨·선택 연동
+- 네이버 공식 Geocoder 서브 모듈을 이용한 주소 검색·현위치 주소 표시
+- 소상공인시장진흥공단 상가정보와 한국관광공사 관광 음식점 목록
+- 위치·음식 종류·거리·개인 기록 기반의 상황 적합도. 맛 평점을 생성하지 않음
+- 공공누리 1·3유형이 확인된 실제 음식점 사진과 출처. 사진은 자르거나 가공하지 않음
+- 유효기간·취소·폐업·상호/주소 매칭을 확인한 C004 공식 위생정보
+- 목록·상세 시트 크기 조절, 모바일 마커 선택 시 지도 집중모드
+- 네이버 지도/길찾기 연결, 전화·공유·위치 저장/삭제
+- 기기 내부 즐겨찾기·개인 평가·메모, JSON 백업·복원
+- 지역별 압축 JSON을 필요한 범위만 내려받음. 원천 기준일과 수집일 구분
 
-## 실행 / 테스트
+전국의 모든 실제 영업 업소를 실시간으로 확인한 자료는 아닙니다. 수집 범위·원천 건수·사진·위생 연결 건수는 `data/status.json`에 기록합니다. 관광공사 목록은 관광정보에 등록된 음식점입니다. 행정상 영업·폐업 전체 인허가 대조, 현재 영업 여부, 메뉴 가격·방문자 리뷰는 미연동입니다.
+
+## 개발·검증
 
 ```bash
 npm test
-python3 -m http.server 5173
-# 또는 npm run serve
+python3 -m unittest discover -s tests -p 'test_*.py'
+python3 scripts/build_static.py
 ```
 
-`http://localhost:5173` 접속. 지도와 주변 장소 데이터는 외부 네트워크가 필요합니다. 위치 권한은 localhost/HTTPS의 secure context에서만 정상 동작합니다.
+네이버 지도는 등록한 운영 origin과 Android WebView origin에서 사용합니다. `config.js`에는 공개 Web SDK 식별자만 들어 있습니다. Client Secret·공공 API 키는 앱·APK에 넣지 않습니다.
 
-추가: [`data-status.html`](./data-status.html)에서 현재 브라우저의 마지막 검색 데이터 및 운영 미연동 항목을 확인할 수 있습니다. 전국 수집 현황이 아님을 명시합니다.
+## 데이터 갱신
 
-## GitHub Pages
+```bash
+# 수집기 전용 환경변수. 값은 출력하거나 커밋하지 않습니다.
+export DATA_GO_KR_SERVICE_KEY='발급받은 원본 키'
+export FOODSAFETY_API_KEY='발급받은 키'
+python3 scripts/collect_data.py --cache /private/restaurant-collection --output data
+```
 
-저장소명: `softm/matjiphannun` (예정). **현재 파일은 배포가 아니라 저장소에 올릴 수 있는 소스입니다.**
+실패·인증 오류·불완전한 페이지 수집은 기존 manifest를 교체하지 않습니다. C004는 동일 키 동시 호출을 거부하므로 순차 조회하며 INFO-500을 재시도합니다. `--cache`는 공개 정적 배포 영역 밖으로 지정합니다.
 
-1. GitHub에서 공개 저장소 `matjiphannun` 생성 (main).
-2. 본 디렉터리 내용을 저장소 루트에 푸시.
-3. `Settings → Pages → Build and deployment → Source: GitHub Actions` 선택.
-4. `.github/workflows/pages.yml` Actions 성공 확인.
-5. 예상 주소: `https://softm.github.io/matjiphannun/` (생성/배포를 확인하기 전에는 서비스 링크가 아님).
+초기 공식 CSV ZIP과 검증된 관광 목록을 정규화할 때는 다음 경로를 지원합니다.
 
-## 데이터 원칙
+```bash
+python3 scripts/collect_data.py --from-cache /private/verified-responses \
+  --sbiz-zip /private/official-sbiz.zip --sbiz-date 2026-06-30 --output data
+```
 
-- OSM 장소 원본 실시간 호출이 실패하거나 비어 있으면 '정보 없음/조회 불가' 표시. 가짜 음식점과 평점 생성 금지.
-- 메뉴 가격/리뷰 수/위생등급/현재 영업 여부는 외부 공식 데이터·검증 전 **미표시**.
-- `내 조건 적합도`: 직선거리, OSM 업종, 부가 태그 존재, 개인 평가로만 계산. **맛을 보장하는 점수가 아님**.
-- 위치는 본 기기의 브라우저에서 권한 동의를 받은 경우만 활용하고, 개인 방문 기록은 localStorage에만 보관 (타기기 자동 백업 없음).
-- 장소를 조회하기 위해 지도 중심 좌표가 Overpass API에, 직접 검색한 동네 문자열은 Nominatim에 전송됩니다. 전송하는 정보/개인정보 정책을 출시 전에 명시해야 합니다.
+`.github/workflows/collect-data.yml`은 수집·검증·공개 데이터 커밋·Pages 배포를 수행합니다. `DATA_GO_KR_SERVICE_KEY`, `FOODSAFETY_API_KEY` Secrets와 `RESTAURANT_DATA_REFRESH_ENABLED=true` 변수가 있어야 실행됩니다. 준비한 시각은 매일 **03:15 KST**이며, Secrets를 등록하기 전에는 활성화하지 않습니다.
 
-## 운영화 전에 해야 할 일
+## Android
 
-1. OSM 공개 서버는 시제품/소규모 개발용. 대규모 운영에서는 공공데이터의 정기 파일 수집 및 계약한 상업용 장소 데이터 API/셀프호스팅으로 이전.
-2. 식품안전나라/지자체 업소 인허가·위생등급·폐업정보를 식당 식별자와 결합하는 별도 배치 구축.
-3. 메뉴 가격·예약·리뷰는 각 데이터 제공사의 계약/허용 범위에 따라 연동. 카카오 로컬 API는 일반 장소 메타데이터만 제공하며 별점/리뷰/실시간 영업 상태는 공식 응답에 없음.
-4. 영업시간은 현재 OSM 원시 `opening_hours` 값만 보여주며 '영업중' 판단하지 않음.
-5. 공개 Nominatim 검색은 **사용자 명시적 검색만**, 자동완성 없음, 사용량 캐시, 클라이언트 단위 1.1초 대기. 운영에서 전체 사용자 1req/s 상한 보장이 안 되므로 프록시+별도 geocoder로 교체.
-6. 사용자 생성 기록의 암호화 백업/계정 동기화는 미구현. 공개 저장소나 광고/분석 SDK에 로컬 개인 데이터 유출하지 않도록 유지.
+[비공개 Android 저장소](https://github.com/softm/matjiphannun.android)의 WebView는 동일한 웹 UI를 사용합니다. 지도 origin은 `https://appassets.androidplatform.net`이며, 식당 JSON은 GitHub Pages 공통 배포본을 읽습니다. 대용량 전국 데이터를 APK마다 중복 포함하지 않습니다. 기기 위치 권한과 실제 WebView 지도 인증은 실기기 확인 항목입니다.
 
-## 공식 자료
+## 공식 출처
 
-- Kakao Local API https://developers.kakao.com/docs/ko/local/dev-guide
-- FoodSafetyKorea OpenAPI https://www.foodsafetykorea.go.kr/apiMain.do
-- Overpass API https://wiki.openstreetmap.org/wiki/Overpass_API
-- Nominatim policy https://operations.osmfoundation.org/policies/nominatim/
-- OpenStreetMap copyright https://www.openstreetmap.org/copyright
+- [소상공인시장진흥공단 API](https://www.data.go.kr/data/15012005/openapi.do)
+- [소상공인시장진흥공단 공식 CSV 파일](https://www.data.go.kr/data/15083033/fileData.do)
+- [한국관광공사 TourAPI](https://www.data.go.kr/data/15101578/openapi.do)
+- [식품안전나라 C004](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?svc_no=C004&menu_grp=MENU_GRP31&menu_no=661)
+- [네이버 지도 Geocoder](https://navermaps.github.io/maps.js.ncp/docs/tutorial-Geocoder-Geocoding.html)
