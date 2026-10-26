@@ -1,7 +1,7 @@
-import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261027c';
-import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261027c';
-import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js?v=20261027c';
-import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261027c';
+import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261027d';
+import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261027d';
+import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js?v=20261027d';
+import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261027d';
 
 const $ = selector => document.querySelector(selector);
 const state = {
@@ -50,12 +50,13 @@ async function createMap() {
   try {
     await loadNaverMaps();
     $('#map').innerHTML='';
-    state.map = new RestaurantMap('map', state.location, id => openDetail(id, {fromMap:true}));
-    placeOriginMarker(); renderMarkers();
+    state.map = new RestaurantMap('map', state.location, id => openDetail(id, {fromMap:true}), mapCoveredHeight);
+    state.map.center(state.location,mapCoveredHeight()); placeOriginMarker(); renderMarkers();
   } catch(error) {
     $('#map').innerHTML = `<div class="map-error"><strong>네이버 지도 연결을 확인해 주세요.</strong><span>${safeText(error.message)}</span><span>식당 목록은 계속 이용할 수 있습니다.</span></div>`;
   }
 }
+function mapCoveredHeight() { return innerWidth<=850 ? ($('#detail-dialog').open?$('#detail-dialog'):$('#sheet')).getBoundingClientRect().height : 0; }
 function placeOriginMarker() { state.map?.origin(state.location,state.location.name); }
 function renderMarkers() { state.map?.render(state.ranked,state.selectedId,safeText); }
 function renderInsight() {
@@ -129,7 +130,7 @@ async function setLocation(location,{isCurrent=false,suppressReverse=false}={}) 
   state.location={lat:Number(location.lat),lon:Number(location.lon),name:location.name||'선택한 지역',isCurrent};
   state.locationIsFallback=!isCurrent;
   updateLocationLabel();
-  state.map?.center(state.location);
+  state.map?.center(state.location,mapCoveredHeight());
   placeOriginMarker();
   writeStore('lastLocation',state.location);
   await loadRestaurants();
@@ -262,13 +263,13 @@ function installSheetDrag() {
     const next=Math.min(.9*vh(),Math.max(.25*vh(),startingHeight+startingY-e.clientY));
     sheet.style.height=`${Math.round(next)}px`;
   });
-  handle.addEventListener('pointerup',()=>{if(!dragging)return;dragging=false;if(!moved){const levels=['compact','expanded','full'];const i=levels.indexOf(sheet.dataset.level);sheet.style.height='';sheet.dataset.level=levels[(i+1)%3];handle.setAttribute('aria-valuenow',String([40,66,90][(i+1)%3]));}else finalize()});
+  handle.addEventListener('pointerup',()=>{if(!dragging)return;dragging=false;if(!moved){const levels=['compact','expanded','full'];const i=levels.indexOf(sheet.dataset.level);sheet.style.height='';sheet.dataset.level=levels[(i+1)%3];handle.setAttribute('aria-valuenow',String([40,66,90][(i+1)%3]));state.map?.resize();}else finalize()});
   handle.addEventListener('pointercancel',()=>{if(!dragging)return;dragging=false;finalize()});
   handle.addEventListener('keydown',e=>{
     if(!['ArrowUp','ArrowDown','Enter',' '].includes(e.key))return;e.preventDefault();
     const levels=['compact','expanded','full'],n=levels.indexOf(sheet.dataset.level);
     const m=e.key==='ArrowDown'?Math.max(0,n-1):Math.min(2,n+1);
-    sheet.style.height='';sheet.dataset.level=levels[m];handle.setAttribute('aria-valuenow',String([40,66,90][m]));
+    sheet.style.height='';sheet.dataset.level=levels[m];handle.setAttribute('aria-valuenow',String([40,66,90][m]));state.map?.resize();
   });
 }
 function installDetailDrag() {
@@ -314,7 +315,7 @@ function bindEvents(){
   $('#location-use-current').onclick=()=>useCurrentPosition();
   $('#search-map-area').onclick=()=>{
     if(!state.map)return toast('지도가 아직 준비되지 않았습니다.');
-    const pos=state.map.getCenter();setLocation({lat:pos.lat,lon:pos.lon,name:'지도 중심 · 선택한 지역'},{isCurrent:false,suppressReverse:true});
+    const pos=state.map.getCenter(mapCoveredHeight());setLocation({lat:pos.lat,lon:pos.lon,name:'지도 중심 · 선택한 지역'},{isCurrent:false,suppressReverse:true});
   };
   $('#location-form').onsubmit=async e=>{
     e.preventDefault();const q=$('#location-query').value.trim();const results=$('#location-search-results');
@@ -374,7 +375,7 @@ async function boot(){
     const placeId=params.get('place');if(placeId&&state.places.some(p=>p.id===placeId))openDetail(placeId);
   }else await useCurrentPosition(true);
   if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('androidplatform.net')){
-    navigator.serviceWorker.register('./sw.js?v=20261027c').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=20261027d').catch(()=>{});
   }
 }
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});

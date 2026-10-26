@@ -1,5 +1,5 @@
-const CACHE='matjiphannun-shell-v4-naver';
-const FILES=['./','./index.html','./styles.css?v=20261027c','./app.js?v=20261027c','./config.js?v=20261027c','./lib/naver-map.js?v=20261027c','./lib/domain.js?v=20261027c','./lib/storage.js?v=20261027c','./lib/providers.js?v=20261027c','./assets/icon.svg','./manifest.webmanifest','./data-status.html'];
+const CACHE='matjiphannun-shell-v5-naver';
+const FILES=['./','./index.html','./styles.css?v=20261027d','./app.js?v=20261027d','./config.js?v=20261027d','./lib/naver-map.js?v=20261027d','./lib/domain.js?v=20261027d','./lib/storage.js?v=20261027d','./lib/providers.js?v=20261027d','./assets/icon.svg','./manifest.webmanifest','./data-status.html'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting()));
 });
