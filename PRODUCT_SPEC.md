@@ -121,7 +121,8 @@ flowchart TD
 
 | 항목 | 확인 상태 |
 |---|---|
-| 웹·Android 소스 | 네이버 지도·지역별 공공 식당 데이터 조회 구현. Android 0.2 APK CI 빌드 통과, 실기기 검증 전 |
+| 운영 웹 | PC·모바일에서 네이버 지도·주소 검색·마커 선택·사진·위생정보·시트 크기 조절 확인 |
+| Android | 동일 웹 화면을 패키징한 0.2.0 APK CI 빌드 통과. 실기기 지도 인증·위치 권한 확인 전 |
 | 네이버 지도 전용 앱 | `matjiphannun` 생성·Client ID/Secret 발급 확인 |
 | 지도 허용 Web origin | `https://softm.github.io`, `https://appassets.androidplatform.net` 등록 |
 | 네이버 지도 사용량 제한 | Dynamic Map 일 5,000 / 월 100,000, 지오코딩·역지오코딩 각 일 1,000 / 월 10,000. 초과 허용 안 함 |
