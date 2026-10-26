@@ -1,7 +1,7 @@
-import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js';
-import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js';
-import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js';
-import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js';
+import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261027b';
+import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261027b';
+import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js?v=20261027b';
+import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261027b';
 
 const $ = selector => document.querySelector(selector);
 const state = {
@@ -373,7 +373,7 @@ async function boot(){
     const placeId=params.get('place');if(placeId&&state.places.some(p=>p.id===placeId))openDetail(placeId);
   }else await useCurrentPosition(true);
   if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('androidplatform.net')){
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=20261027b').catch(()=>{});
   }
 }
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});
