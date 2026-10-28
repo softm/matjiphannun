@@ -1,8 +1,8 @@
-import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261029b';
-import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261029b';
-import { fetchRestaurants, fetchViewport, lookupLocations, reverseLocation } from './lib/providers.js?v=20261029b';
-import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261029b';
-import { visitPoints, neighbourhoodPoints } from './lib/enrichment.js?v=20261029b';
+import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261029c';
+import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261029c';
+import { fetchRestaurants, fetchViewport, lookupLocations, reverseLocation } from './lib/providers.js?v=20261029c';
+import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261029c';
+import { visitPoints, neighbourhoodPoints } from './lib/enrichment.js?v=20261029c';
 
 const $ = selector => document.querySelector(selector);
 const state = {
@@ -94,6 +94,13 @@ function cardHTML(p,i) {
     </div>
   </article>`;
 }
+function selectListRow(id){
+  if(state.selectedId===id)return;
+  state.selectedId=id;
+  $('#restaurant-list').querySelectorAll('[data-open]').forEach(row=>{const active=row.dataset.open===id;row.classList.toggle('is-selected',active);row.setAttribute('aria-pressed',String(active));});
+  renderMarkers();
+}
+function activateListRow(id){if(state.selectedId===id)openDetail(id);else selectListRow(id);}
 function renderResults() {
   if (state.loading) return;
   const ranked=rankPlaces(state.places,state.location,{...state.settings,radius:state.map?Infinity:state.settings.radius,search:state.search,favorites:state.favorites,reviews:state.reviews});
@@ -316,16 +323,27 @@ function bindEvents(){
   $('#sort-select').onchange=e=>{state.settings.sort=e.target.value;persist();renderResults()};
   $('#search-form').onsubmit=e=>{e.preventDefault();state.search=$('#restaurant-search').value.trim();renderResults();if(window.innerWidth<=850)$('#sheet').dataset.level='full'};
   $('#restaurant-search').addEventListener('input',e=>{state.search=e.target.value.trim();renderResults()});
+  let scrollSelectionTimer;
+  $('#restaurant-list').addEventListener('scroll',()=>{
+    clearTimeout(scrollSelectionTimer);
+    scrollSelectionTimer=setTimeout(()=>{
+      if($('#detail-dialog').open)return;
+      const list=$('#restaurant-list'),bounds=list.getBoundingClientRect();
+      const rows=[...list.querySelectorAll('[data-open]')];
+      const row=rows.find(r=>{const b=r.getBoundingClientRect();return b.bottom>bounds.top+Math.min(50,bounds.height/3)&&b.top<bounds.bottom;});
+      if(row)selectListRow(row.dataset.open);
+    },100);
+  },{passive:true});
   $('#restaurant-list').addEventListener('click',e=>{
     const save=e.target.closest('[data-save]');if(save){e.stopPropagation();toggleFavorite(save.dataset.save);return;}
-    const card=e.target.closest('[data-open]');if(card)openDetail(card.dataset.open);
+    const card=e.target.closest('[data-open]');if(card)activateListRow(card.dataset.open);
     if(e.target.closest('#clear-filters')){
       state.search='';state.favoritesOnly=false;$('#restaurant-search').value='';state.settings.category='all';state.settings.context='balanced';persist();renderChips();renderResults();
     }
     if(e.target.closest('#retry-load'))loadRestaurants();
   });
   $('#restaurant-list').addEventListener('keydown',e=>{
-    if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-open]')){e.preventDefault();openDetail(e.target.dataset.open);}
+    if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-open]')){e.preventDefault();activateListRow(e.target.dataset.open);}
   });
   $('#detail-content').addEventListener('click',e=>{const btn=e.target.closest('[data-save]');if(btn)toggleFavorite(btn.dataset.save)});
   $('#detail-dialog').addEventListener('close',()=>{state.selectedId=null;$('#app').classList.remove('map-focus');renderResults();});
@@ -395,7 +413,7 @@ async function boot(){
     const placeId=params.get('place');if(placeId&&state.places.some(p=>p.id===placeId))openDetail(placeId);
   }else await useCurrentPosition(true);
   if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('androidplatform.net')){
-    navigator.serviceWorker.register('./sw.js?v=20261029b').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=20261029c').catch(()=>{});
   }
 }
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});

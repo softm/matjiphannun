@@ -1,5 +1,5 @@
 const CACHE='matjiphannun-shell-v6-web-details-20261028';
-const FILES=['./','./index.html','./styles.css?v=20261029b','./app.js?v=20261029b','./config.js?v=20261029b','./lib/naver-map.js?v=20261029b','./lib/domain.js?v=20261029b','./lib/storage.js?v=20261029b','./lib/providers.js?v=20261029b','./lib/enrichment.js?v=20261029b','./lib/marker-layout.js?v=20261029b','./assets/icon.svg','./manifest.webmanifest','./data-status.html'];
+const FILES=['./','./index.html','./styles.css?v=20261029c','./app.js?v=20261029c','./config.js?v=20261029c','./lib/naver-map.js?v=20261029c','./lib/domain.js?v=20261029c','./lib/storage.js?v=20261029c','./lib/providers.js?v=20261029c','./lib/enrichment.js?v=20261029c','./lib/marker-layout.js?v=20261029c','./assets/icon.svg','./manifest.webmanifest','./data-status.html'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting()));
 });
