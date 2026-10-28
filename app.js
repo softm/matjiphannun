@@ -1,8 +1,8 @@
-import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261029c';
-import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261029c';
-import { fetchRestaurants, fetchViewport, lookupLocations, reverseLocation } from './lib/providers.js?v=20261029c';
-import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261029c';
-import { visitPoints, neighbourhoodPoints } from './lib/enrichment.js?v=20261029c';
+import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261029d';
+import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261029d';
+import { fetchRestaurants, fetchViewport, lookupLocations, reverseLocation } from './lib/providers.js?v=20261029d';
+import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261029d';
+import { visitPoints, neighbourhoodPoints } from './lib/enrichment.js?v=20261029d';
 
 const $ = selector => document.querySelector(selector);
 const state = {
@@ -94,6 +94,17 @@ function cardHTML(p,i) {
     </div>
   </article>`;
 }
+const ROW_HEIGHT=116;
+let virtualStart=-1,virtualRevision=0;
+function renderVirtualList(){
+ const list=$('#restaurant-list');
+ const start=Math.min(Math.max(0,state.ranked.length-1),Math.max(0,Math.floor(list.scrollTop/ROW_HEIGHT)-3));
+ const end=Math.min(state.ranked.length,start+Math.ceil((list.clientHeight||600)/ROW_HEIGHT)+7);
+ const key=start+':'+end+':'+virtualRevision;
+ if(list.dataset.window===key)return;
+ list.dataset.window=key;
+ list.innerHTML=`<div aria-hidden="true" style="height:${start*ROW_HEIGHT}px"></div>`+state.ranked.slice(start,end).map((p,i)=>cardHTML(p,start+i)).join('')+`<div aria-hidden="true" style="height:${(state.ranked.length-end)*ROW_HEIGHT}px"></div>`;
+}
 function selectListRow(id){
   if(state.selectedId===id)return;
   state.selectedId=id;
@@ -110,11 +121,11 @@ function renderResults() {
   else if (lastKnownError) apiStatus(lastKnownError);
   renderInsight();
   const list=$('#restaurant-list');
+  virtualRevision++;
   if (!state.ranked.length) {
     list.innerHTML = `<div class="list-empty"><span style="font-size:42px">🍜</span><strong>조건에 맞는 식당을 찾지 못했어요.</strong><span>${lastKnownError ? safeText(lastKnownError) : '수집된 공공데이터에 해당 지역·조건의 식당이 없을 수 있어요. 데이터 현황에서 수집 범위를 확인하세요.'}</span><button id="clear-filters" type="button">조건 초기화</button><button id="retry-load" type="button">실제 데이터 다시 조회</button></div>`;
   } else {
-    list.innerHTML=state.ranked.slice(0,120).map(cardHTML).join('');
-    if (state.ranked.length>120) list.innerHTML+=`<p class="hint-text" style="margin:8px 0 15px">현재 ${state.ranked.length}곳 중 120곳을 표시합니다. 조건을 좁혀 주세요.</p>`;
+    renderVirtualList();
   }
   renderMarkers();
 }
@@ -325,6 +336,7 @@ function bindEvents(){
   $('#restaurant-search').addEventListener('input',e=>{state.search=e.target.value.trim();renderResults()});
   let scrollSelectionTimer;
   $('#restaurant-list').addEventListener('scroll',()=>{
+    if(state.ranked.length)renderVirtualList();
     clearTimeout(scrollSelectionTimer);
     scrollSelectionTimer=setTimeout(()=>{
       if($('#detail-dialog').open)return;
@@ -413,7 +425,7 @@ async function boot(){
     const placeId=params.get('place');if(placeId&&state.places.some(p=>p.id===placeId))openDetail(placeId);
   }else await useCurrentPosition(true);
   if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('androidplatform.net')){
-    navigator.serviceWorker.register('./sw.js?v=20261029c').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=20261029d').catch(()=>{});
   }
 }
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});
