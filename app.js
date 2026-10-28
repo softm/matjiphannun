@@ -1,8 +1,8 @@
-import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261028a';
-import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261028a';
-import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js?v=20261028a';
-import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261028a';
-import { visitPoints, neighbourhoodPoints } from './lib/enrichment.js?v=20261028a';
+import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261028b';
+import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261028b';
+import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js?v=20261028b';
+import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261028b';
+import { visitPoints, neighbourhoodPoints } from './lib/enrichment.js?v=20261028b';
 
 const $ = selector => document.querySelector(selector);
 const state = {
@@ -210,7 +210,7 @@ function renderDetail(place) {
       <div class="detail-section visit-points"><div class="point-heading"><h3>방문 전 알아둘 포인트</h3><span>${points.length?'출처 기반 정리':'수집 대기'}</span></div>${points.length?`<p class="point-basis">웹에 기재된 사실을 항목별로 정리했습니다. 맛·서비스 평점과 실시간 영업 여부를 뜻하지 않습니다.</p><ul class="point-list">${points.map(point=>`<li class="point-${point.kind}"><strong>${safeText(point.label)}${point.kind==='conflict'?' · 출처 차이 확인':''}</strong><p>${safeText(point.text)}</p><a href="${safeText(point.evidence.sourceUrl)}" target="_blank" rel="noopener noreferrer">${safeText(point.evidence.sourceName)} ↗</a><small>확인 ${safeText(point.evidence.checkedAt?.slice(0,10)||'미제공')}${point.evidence.sourceDate?` · 원천 수정 ${safeText(point.evidence.sourceDate.slice(0,10))}`:''}</small></li>`).join('')}</ul>`:'<p>이 식당의 웹 세부정보를 아직 확보하지 못했습니다. 확인된 정보가 수집되면 여기에 표시합니다.</p>'}</div>
       <div class="detail-facts"><div><small>내 조건 적합도</small><strong>${info.score}점</strong></div><div><small>확인된 세부 항목</small><strong>${info.evidence}개 / 6개</strong></div></div>
       <div class="detail-section"><h3>왜 추천하나요?</h3><p>${safeText(info.reason)} · 거리 ${prettyDistance(info.distance)} · 추가 등록된 정보 ${info.evidence}개. 이 점수는 맛 평점이 아니며 리뷰/메뉴가격/위생 상태를 평가하지 않습니다.</p></div>
-      <div class="detail-section"><h3>확인된 장소 정보</h3><p>영업시간: ${safeText(place.hours||'정보 미확인')}${place.hours?' (원천 제공 정보 · 방문 전 확인)':''}</p><p>전화: ${safeText(place.phone||'정보 미확인')}</p><p>홈페이지: ${place.website&&hasValidUrl(place.website)?`<a href="${safeText(place.website)}" target="_blank" rel="noopener noreferrer">공식 웹사이트 열기</a>`:'정보 미확인'}</p><p>휠체어 접근성: ${safeText(place.tags?.wheelchair==='yes'?'가능으로 등록':place.tags?.wheelchair==='no'?'어려움으로 등록':'정보 미확인')}</p></div>
+      <div class="detail-section"><h3>확인된 장소 정보</h3><p>영업시간: ${safeText(place.hours||'정보 미확인')}${place.hours?' (원천 제공 정보 · 방문 전 확인)':''}</p><p>전화: ${safeText(place.phone||'정보 미확인')}</p><p>홈페이지: ${place.website&&hasValidUrl(place.website)?`<a href="${safeText(place.website)}" target="_blank" rel="noopener noreferrer">원천 등록 웹사이트 열기</a>`:'정보 미확인'}</p><p>휠체어 접근성: ${safeText(place.tags?.wheelchair==='yes'?'가능으로 등록':place.tags?.wheelchair==='no'?'어려움으로 등록':facts.some(f=>f.key.startsWith('access:'))?'출입·편의 항목별 안내는 웹 세부정보 참고':'정보 미확인')}</p></div>
       ${facts.length?`<details class="detail-section web-facts"><summary>웹에서 확인한 세부정보 ${facts.length}개</summary><dl>${facts.map(f=>`<div><dt>${safeText(f.label)}</dt><dd>${safeText(f.value)} <a href="${safeText(f.sourceUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${safeText(f.label)} 출처">출처 ↗</a></dd></div>`).join('')}</dl></details>`:''}
       ${place.enrichment?.conflicts?.length?`<div class="detail-section conflict-notice"><h3>출처별 내용이 다른 항목</h3>${place.enrichment.conflicts.map(c=>`<p><strong>${safeText(c.label)}</strong>: ${c.values.map(v=>`${safeText(v.value)} (${safeText(v.sourceName)})`).join(' / ')}</p>`).join('')}<p>업소에 직접 확인해 주세요.</p></div>`:''}
       ${extraImages.length||place.enrichment?.photoGallery?.count?`<div class="detail-section"><h3>사진 더 보기</h3>${extraImages.length?`<div class="photo-gallery">${extraImages.map(image=>`<figure><img src="${safeText(image.url)}" alt="${safeText(image.caption||place.name)}" loading="lazy" referrerpolicy="no-referrer"><figcaption>${safeText(image.author)} · ${safeText(image.license)} · <a href="${safeText(image.sourceUrl)}" target="_blank" rel="noopener noreferrer">출처 ↗</a></figcaption></figure>`).join('')}</div>`:''}${hasValidUrl(place.enrichment?.photoGallery?.sourceUrl)?`<a class="source-gallery-link" href="${safeText(place.enrichment.photoGallery.sourceUrl)}" target="_blank" rel="noopener noreferrer">관광공사 원문 사진 ${Number(place.enrichment.photoGallery.count)}장 보기 ↗</a><p class="point-basis">사진별 이용조건이 확인된 이미지를 앱에 표시합니다.</p>`:''}</div>`:''}
@@ -385,7 +385,7 @@ async function boot(){
     const placeId=params.get('place');if(placeId&&state.places.some(p=>p.id===placeId))openDetail(placeId);
   }else await useCurrentPosition(true);
   if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('androidplatform.net')){
-    navigator.serviceWorker.register('./sw.js?v=20261028a').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=20261028b').catch(()=>{});
   }
 }
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});

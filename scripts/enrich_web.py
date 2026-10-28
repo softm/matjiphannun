@@ -36,6 +36,7 @@ def clean(value, limit=1800):
     text = re.sub(r'\s+', ' ', text).strip(' ·\t\n')
     return '' if text.lower() in ('null','none','undefined','-','정보없음') else text[:limit]
 def token(value): return re.sub(r'[^0-9a-z가-힣]', '', clean(value).lower())
+def address_token(value): return re.sub(r'[^0-9a-z가-힣-]', '', clean(value).lower())
 def load(path, default=None):
     return json.loads(path.read_text()) if path.exists() else default
 def write(path, data):
@@ -157,7 +158,7 @@ def normalize_kto(data, entry, targets, checked):
     if not p:return None,'unmatched'
     address=' '.join(filter(None,[clean(a.get('addr1')),clean(a.get('addr2'))]))
     # A content ID alone is insufficient when a provider reassigns/renames it.
-    if token(p['name'])!=token(a.get('title')) or token(p['address'])!=token(address):return None,'identity-mismatch'
+    if token(p['name'])!=token(a.get('title')) or address_token(p['address'])!=address_token(address):return None,'identity-mismatch'
     try:
         if abs(float(a['mapY'])-p['lat'])>.001 or abs(float(a['mapX'])-p['lon'])>.001:return None,'identity-mismatch'
     except (KeyError,ValueError,TypeError):return None,'identity-mismatch'
@@ -232,8 +233,8 @@ def owner_facts(text,url,target,checked):
         if not set(types)&{'Restaurant','CafeOrCoffeeShop','FoodEstablishment','Bakery'}:continue
         addr=node.get('address',{});addr=addr if isinstance(addr,dict) else {}
         address=' '.join(str(addr.get(k,'')) for k in ('addressRegion','addressLocality','streetAddress'))
-        street=token(addr.get('streetAddress',''))
-        if token(node.get('name'))!=token(target['name']) or not street or street not in token(target['address']):continue
+        street=address_token(addr.get('streetAddress',''))
+        if token(node.get('name'))!=token(target['name']) or not street or not re.search(re.escape(street)+r'(?![0-9-])',address_token(target['address'])):continue
         # Reject a same-name branch unless street + building number match.
         if not re.search(r'\d',street):continue
         def add(key,value):
@@ -335,18 +336,21 @@ def main():
             # Only a safe error category; request URLs, raw responses and stacks stay private.
             attempts=old.get('attempts',0)+1
             return cid,None,{'status':'retry' if attempts<3 else 'review-needed','checkedAt':check,'attempts':attempts,'error':type(err).__name__}
-    owner_pending=[r for r in records.values() if r.get('website') and not r.get('ownerCheckedAt')]
+    def needs_owner(record):
+        url=record.get('website','');host=urllib.parse.urlsplit(url).hostname or ''
+        return bool(url and not record.get('ownerCheckedAt') and record.get('ownerAttempts',0)<3 and not any(host==h or host.endswith('.'+h) for h in ['naver.com','naver.me','instagram.com','facebook.com','kakao.com','blogspot.com']))
+    owner_pending=[r for r in records.values() if needs_owner(r)]
     if not pending and not owner_pending:
         print(json.dumps(load(data/'enrichment/status.json',{}),ensure_ascii=False));return
     processed=0
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1,min(args.workers,4))) as pool:
         for i in range(0,min(len(pending),args.limit),max(1,args.workers)):
-            if time.monotonic()-started>args.seconds:break
+            if time.monotonic()-started>args.seconds-min(180,args.seconds*.1):break
             for cid,record,result in pool.map(collect,pending[i:i+args.workers]):
                 state['results'][cid]=result
                 if record:
                     old=records.get(record['id'],{})
-                    for key in ('ownerCheckedAt','ownerFacts'): 
+                    for key in ('ownerCheckedAt','ownerFacts','ownerAttempts','ownerLastAttempt'): 
                         if key in old:record[key]=old[key]
                     if record.get('ownerFacts'):
                         record['facts']+=record['ownerFacts'];record['points'],record['conflicts']=make_points(record['facts'])
@@ -360,8 +364,9 @@ def main():
     for record in records.values():
         if owners>=args.owner_limit or time.monotonic()-started>args.seconds:break
         url=record.get('website','');host=urllib.parse.urlsplit(url).hostname or ''
-        if not url or record.get('ownerCheckedAt') or any(host==h or host.endswith('.'+h) for h in ['naver.com','naver.me','instagram.com','facebook.com','kakao.com','blogspot.com']):continue
+        if not needs_owner(record):continue
         owners+=1
+        record['ownerAttempts']=record.get('ownerAttempts',0)+1;record['ownerLastAttempt']=now()
         try:
             raw,final=network.get(url)
             if urllib.parse.urlsplit(final).hostname not in (host,'www.'+host,host.removeprefix('www.')):continue

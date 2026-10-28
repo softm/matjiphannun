@@ -30,6 +30,12 @@ class Enrichment(unittest.TestCase):
  def test_unsafe_schemes_and_private_addresses_are_rejected(self):
   for url in ['file:///etc/passwd','http://127.0.0.1','http://169.254.169.254','https://user:pass@example.com','http://localhost','https://example.com:8080']:
    self.assertFalse(e.safe_url(url),url)
+ def test_building_number_hyphens_and_prefixes_do_not_merge_different_restaurants(self):
+  different={**TARGET,'address':'서울특별시 중구 길 1-1'}
+  record,status=e.normalize_kto(source(addr1='서울특별시 중구 길 11'),ENTRY,{'1':different},AT)
+  self.assertIsNone(record);self.assertEqual(status,'identity-mismatch')
+  page='<script type="application/ld+json">'+json.dumps({'@type':'Restaurant','name':TARGET['name'],'address':{'streetAddress':'길 1'},'openingHours':'11:00-21:00'})+'</script>'
+  self.assertEqual(e.owner_facts(page,'https://example.com',{**TARGET,'address':'서울 중구 길 11'},AT),[])
  def test_sitemap_does_not_accept_arbitrary_hosts(self):
   xml='<urlset><url><loc>https://evil.example/detail/ms_detail.do?cotid='+ENTRY['cotid']+'</loc></url></urlset>'
   with self.assertRaises(ValueError):e.sitemap_entries(xml)
