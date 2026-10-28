@@ -60,3 +60,10 @@ python3 scripts/collect_data.py --from-cache /private/verified-responses \
 - [한국관광공사 TourAPI](https://www.data.go.kr/data/15101578/openapi.do)
 - [식품안전나라 C004](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?svc_no=C004&menu_grp=MENU_GRP31&menu_no=661)
 - [네이버 지도 Geocoder](https://navermaps.github.io/maps.js.ncp/docs/tutorial-Geocoder-Geocoding.html)
+
+
+## 웹 세부정보와 방문 포인트
+
+`enrich-web.yml`은 공개 관광 음식점 사이트맵과 연결된 업소 웹사이트를 이어 수집합니다. API 키가 필요 없는 웹 수집은 기존 기본 목록 API 갱신과 별도로 실행됩니다. 확인한 사실마다 출처·원천 수정일·확인일을 붙이고, 메뉴·휴식시간·마지막 주문·주차·예약·가족·접근성 정보를 방문 포인트로 표시합니다. 처리·미확보·불일치 수는 [데이터 현황](https://softm.github.io/matjiphannun/data-status.html)에 공개합니다.
+
+웹에 있는 모든 사진의 재사용 권한이 자동으로 생기지는 않습니다. 사진별 이용조건을 확인한 이미지만 앱에 표시하고, 나머지는 사진 식별자·설명·원문 갤러리로 연결합니다. 전체 85만 업소의 세부정보가 모두 확보된 상태를 의미하지 않습니다.

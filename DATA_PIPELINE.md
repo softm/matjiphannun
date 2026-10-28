@@ -92,3 +92,16 @@ OSM Overpass·Nominatim 실시간 의존을 제거했다. 지도와 주소 검�
 | 지도 | 운영 도메인과 Android에서 마커·라벨·시트 크기 조절·현위치·주소 표시 검증 |
 
 수집기 `scripts/collect_data.py`, 네이버 지도 `lib/naver-map.js`, 정적 데이터 조회 `lib/providers.js`를 구현했다. 공개 JSON은 지역별 gzip 압축을 Base64로 감싼 JSON이며 브라우저에서 `DecompressionStream`으로 읽는다. 실제 정규화 건수·수집 범위는 `data/status.json`을 따른다. 자동 갱신용 Secrets·활성화 변수와 Android 실기기 검증은 별도 상태로 관리한다.
+
+
+## 공개 웹 세부정보·포인트 수집
+
+- 실행: `python3 scripts/enrich_web.py --limit 1800 --seconds 2700 --workers 3 --interval 0.8`.
+- 원천: 관광공사 `restaurants_sitemap.xml`, 공개 상세 화면/인쇄 화면이 사용하는 `TOUR_CONTENT_BODY_VIEW` 읽기 요청, 해당 원천에 연결된 업소 웹사이트의 Restaurant JSON-LD.
+- robots 규칙을 확인하고, 원천 오류 시 대량 요청을 중지한다. 소스 변경·HTTP 오류·재시도·불일치는 체크포인트에 남긴다. 업소 링크는 사설 IP·사용자정보·비 HTTP URL을 배제하고 리디렉션도 검사한다.
+- 매칭: 관광 콘텐츠 ID, 정규화한 전체 상호·주소, 좌표 오차를 모두 검사한다. 다른 층·지점·상호는 보류한다.
+- 공개: `data/enrichment/regions/`의 주변 지역 보강 자료를 기본 목록에 합친다. 기존 전체 목록을 배치마다 다시 쓰지 않는다. 정보마다 출처·원천 수정일·확인일을 보관한다.
+- 분석: 대표 메뉴, 준비/휴식시간, 마지막 주문, 주차 불가·유료·제한, 예약 조건, 가족·접근성 정보를 포인트로 정리한다. 상반된 원천은 하나로 단정하지 않는다. 미확인을 부정으로 바꾸지 않는다.
+- 이미지: 개별 Type1·Type3 이용조건이 확인된 원본만 앱에서 표시한다. 갤러리 발견 수와 앱 재사용 가능 수를 구분한다. 사용자가 올린 사진·리뷰·프로필·관광공사 내부 담당자 연락처는 공개 데이터에 포함하지 않는다.
+- 진행: `data/enrichment/status.json`은 대상·처리·남은 수·불일치·재시도·필드별 확보율을 표시한다. `.collection/web-state.json`은 공개 URL 식별자와 진행 상태만 Git에 저장하며 정적 배포에는 포함하지 않는다.
+- 자동화: `.github/workflows/enrich-web.yml`은 코드 변경·수동 실행·매시간 40분에 실행한다. API 키 없이 공개 웹부터 수집하고, 기존 API 일괄 수집 워크플로와 공통 concurrency 그룹을 사용한다.
