@@ -121,7 +121,11 @@ async function loadRestaurants() {
   lastKnownError=null;
   setLoader(true,'공공 식당 데이터에서 주변 지역을 확인합니다'); apiStatus('실제 장소 데이터 조회 중');
   try {
-    const result=bounds?await fetchViewport(bounds,loadAbort.signal):await fetchRestaurants(state.location.lat,state.location.lon,state.settings.radius,loadAbort.signal);
+    const result=bounds?await fetchViewport(bounds,loadAbort.signal,partial=>{
+      if(request!==state.requestNumber)return;
+      Object.assign(state,{places:partial.places,fetchedAt:partial.fetchedAt});
+      setLoader(false);renderResults();apiStatus(`지도 영역 조회 중 · ${partial.done}/${partial.total}지역 · ${partial.places.length.toLocaleString()}곳`);
+    }):await fetchRestaurants(state.location.lat,state.location.lon,state.settings.radius,loadAbort.signal);
     if (request!==state.requestNumber) return;
     Object.assign(state,{places:result.places,fetchedAt:result.fetchedAt,stale:result.stale,enrichmentAvailable:result.enrichmentAvailable});
     if (result.stale) toast('원본 API 접속이 불안정해 이전 데이터를 표시합니다.');
