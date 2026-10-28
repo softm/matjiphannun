@@ -1,8 +1,8 @@
-import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261028b';
-import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261028b';
-import { fetchRestaurants, lookupLocations, reverseLocation } from './lib/providers.js?v=20261028b';
-import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261028b';
-import { visitPoints, neighbourhoodPoints } from './lib/enrichment.js?v=20261028b';
+import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261029a';
+import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261029a';
+import { fetchRestaurants, fetchViewport, lookupLocations, reverseLocation } from './lib/providers.js?v=20261029a';
+import { loadNaverMaps, RestaurantMap } from './lib/naver-map.js?v=20261029a';
+import { visitPoints, neighbourhoodPoints } from './lib/enrichment.js?v=20261029a';
 
 const $ = selector => document.querySelector(selector);
 const state = {
@@ -15,6 +15,7 @@ const state = {
   stale: false, search: '', requestNumber: 0, detail: null, enrichmentAvailable: true,
 };
 let loadAbort = null;
+let viewportTimer,viewportKey;
 let toastTimer = null;
 let lastKnownError = null;
 const emojis = { restaurant: '🍲', cafe: '☕', fast_food: '🥪', food_court: '🍱' };
@@ -52,6 +53,7 @@ async function createMap() {
     await loadNaverMaps();
     $('#map').innerHTML='';
     state.map = new RestaurantMap('map', state.location, id => openDetail(id, {fromMap:true}), mapCoveredHeight);
+    state.map.onViewport=()=>{clearTimeout(viewportTimer);viewportTimer=setTimeout(()=>loadRestaurants(),250);};
     state.map.center(state.location,mapCoveredHeight()); placeOriginMarker(); renderMarkers();
   } catch(error) {
     $('#map').innerHTML = `<div class="map-error"><strong>네이버 지도 연결을 확인해 주세요.</strong><span>${safeText(error.message)}</span><span>식당 목록은 계속 이용할 수 있습니다.</span></div>`;
@@ -94,7 +96,7 @@ function cardHTML(p,i) {
 }
 function renderResults() {
   if (state.loading) return;
-  const ranked=rankPlaces(state.places,state.location,{...state.settings,search:state.search,favorites:state.favorites,reviews:state.reviews});
+  const ranked=rankPlaces(state.places,state.location,{...state.settings,radius:state.map?Infinity:state.settings.radius,search:state.search,favorites:state.favorites,reviews:state.reviews});
   state.ranked=state.favoritesOnly ? ranked.filter(p=>state.favorites[p.id]) : ranked;
   $('#result-count').textContent=`${state.ranked.length}곳`;
   if (state.fetchedAt) apiStatus(`공공 식당 데이터 · 수집 ${formatDateTime(state.fetchedAt)}${state.stale?' · 갱신 지연':''}${state.enrichmentAvailable===false?' · 웹 세부정보 연결 지연':''}`);
@@ -110,18 +112,22 @@ function renderResults() {
   renderMarkers();
 }
 async function loadRestaurants() {
+  const bounds=state.map?.getViewport();
+  const key=bounds?JSON.stringify(bounds):null;
+  if(key&&key===viewportKey&&state.places.length)return;
+  viewportKey=key;
   loadAbort?.abort(); loadAbort=new AbortController();
   const request=++state.requestNumber;
   lastKnownError=null;
   setLoader(true,'공공 식당 데이터에서 주변 지역을 확인합니다'); apiStatus('실제 장소 데이터 조회 중');
   try {
-    const result=await fetchRestaurants(state.location.lat,state.location.lon,state.settings.radius,loadAbort.signal);
+    const result=bounds?await fetchViewport(bounds,loadAbort.signal):await fetchRestaurants(state.location.lat,state.location.lon,state.settings.radius,loadAbort.signal);
     if (request!==state.requestNumber) return;
     Object.assign(state,{places:result.places,fetchedAt:result.fetchedAt,stale:result.stale,enrichmentAvailable:result.enrichmentAvailable});
     if (result.stale) toast('원본 API 접속이 불안정해 이전 데이터를 표시합니다.');
   } catch(err) {
     if (request!==state.requestNumber || err.name==='AbortError') return;
-    state.places=[];state.fetchedAt=null;state.stale=false;
+    viewportKey=null;state.places=[];state.fetchedAt=null;state.stale=false;
     lastKnownError='식당 데이터 파일을 불러오지 못했습니다. 연결을 확인한 후 다시 시도해 주세요.';
     toast(lastKnownError);
     console.warn('Restaurant provider:',err.message);
@@ -385,7 +391,7 @@ async function boot(){
     const placeId=params.get('place');if(placeId&&state.places.some(p=>p.id===placeId))openDetail(placeId);
   }else await useCurrentPosition(true);
   if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('androidplatform.net')){
-    navigator.serviceWorker.register('./sw.js?v=20261028b').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=20261029a').catch(()=>{});
   }
 }
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});
