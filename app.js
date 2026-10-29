@@ -1,3 +1,4 @@
+import {workerTask} from './lib/worker-client.js?v=20261029d';
 import { DEFAULT_PLACE, CATEGORIES, CONTEXTS, escapeHTML, rankPlaces, prettyDistance, formatDateTime, hasValidUrl } from './lib/domain.js?v=20261029d';
 import { readStore, writeStore, exportArchive, importArchive } from './lib/storage.js?v=20261029d';
 import { fetchRestaurants, fetchViewport, lookupLocations, reverseLocation } from './lib/providers.js?v=20261029d';
@@ -112,9 +113,17 @@ function selectListRow(id){
   renderMarkers();
 }
 function activateListRow(id){if(state.selectedId===id)openDetail(id);else selectListRow(id);}
-function renderResults() {
+let rankingRevision=0;
+async function renderResults() {
   if (state.loading) return;
-  const ranked=rankPlaces(state.places,state.location,{...state.settings,radius:state.map?Infinity:state.settings.radius,search:state.search,favorites:state.favorites,reviews:state.reviews});
+  const revision=++rankingRevision,snapshot=state.places;
+  const options={...state.settings,radius:state.map?Infinity:state.settings.radius,search:state.search,favorites:state.favorites,reviews:state.reviews};
+  const origin={...state.location};let ranked;
+  const compact=snapshot.map((p,__index)=>({__index,id:p.id,name:p.name,address:p.address,lat:p.lat,lon:p.lon,amenity:p.amenity,category:p.category,phone:!!p.phone,website:!!p.website,hours:!!p.hours,hygiene:!!p.hygiene}));
+  const job=workerTask('rank',[compact,origin,options]);
+  try{ranked=job?(await job).map(({index,...metrics})=>({...snapshot[index],...metrics})):rankPlaces(snapshot,origin,options);}
+  catch{ranked=rankPlaces(snapshot,origin,options);}
+  if(revision!==rankingRevision||snapshot!==state.places||state.loading)return;
   state.ranked=state.favoritesOnly ? ranked.filter(p=>state.favorites[p.id]) : ranked;
   $('#result-count').textContent=`${state.ranked.length}곳`;
   if (state.fetchedAt) apiStatus(`공공 식당 데이터 · 수집 ${formatDateTime(state.fetchedAt)}${state.stale?' · 갱신 지연':''}${state.enrichmentAvailable===false?' · 웹 세부정보 연결 지연':''}`);
@@ -429,3 +438,4 @@ async function boot(){
   }
 }
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});
+

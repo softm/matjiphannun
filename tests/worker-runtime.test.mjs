@@ -14,7 +14,10 @@ test('real worker decodes compressed data, filters viewport and clusters without
   const bounds={west:126,east:126.5,south:37,north:37.5};const filtered=await call('filter',[decoded.places,bounds]);
   assert.ok(filtered.length>0&&filtered.length<20000);assert.ok(filtered.every(p=>p.lon<=126.5&&p.lat<=37.5));
   const markers=await call('layout',[filtered,bounds,null]);assert.ok(markers.length<=240);assert.equal(markers.reduce((n,m)=>n+(m.count||1),0),filtered.length);
+  const ranked=await call('rank',[filtered.map((p,__index)=>({...p,__index,amenity:'restaurant'})),{lat:37,lon:126},{radius:Infinity}]);
+  assert.equal(ranked.length,filtered.length);assert.ok(ranked.every(p=>Number.isFinite(p.score)&&Number.isInteger(p.index)));
   await assert.rejects(call('decode',[{encoding:'gzip-base64',data:'invalid'}]));
   assert.equal((await call('filter',[[places[0]],bounds])).length,1);
  }finally{await worker.terminate();}
 });
+
