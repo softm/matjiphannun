@@ -1,5 +1,5 @@
-const CACHE='matjiphannun-shell-20261119a';
-const FILES=['./','./index.html','./styles.css?v=20261119a','./app.js?v=20261119a','./config.js?v=20261029d','./lib/naver-map.js?v=20261029d','./lib/domain.js?v=20261029d','./lib/storage.js?v=20261029d','./lib/providers.js?v=20261029d','./lib/enrichment.js?v=20261029d','./lib/marker-layout.js?v=20261029d','./lib/worker-client.js?v=20261029d','./lib/data-worker.js?v=20261029d','./assets/icon.svg','./assets/icon-192.png','./assets/icon-512.png','./assets/icon-maskable-512.png','./manifest.webmanifest','./data-status.html'];
+const CACHE='matjiphannun-shell-20261119b';
+const FILES=['./','./index.html','./styles.css?v=20261119b','./app.js?v=20261119b','./config.js?v=20261029d','./lib/naver-map.js?v=20261119b','./lib/domain.js?v=20261029d','./lib/storage.js?v=20261029d','./lib/providers.js?v=20261029d','./lib/enrichment.js?v=20261029d','./lib/marker-layout.js?v=20261119b','./lib/worker-client.js?v=20261029d','./lib/data-worker.js?v=20261029d','./assets/icon.svg','./assets/icon-192.png','./assets/icon-512.png','./assets/icon-maskable-512.png','./manifest.webmanifest','./data-status.html'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting()));
 });
