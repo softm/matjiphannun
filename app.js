@@ -19,6 +19,7 @@ let loadAbort = null;
 let viewportTimer,viewportKey;
 let toastTimer = null;
 let lastKnownError = null;
+let deferredInstallPrompt = null;
 const emojis = { restaurant: '🍲', cafe: '☕', fast_food: '🥪', food_court: '🍱' };
 const escape = escapeHTML;
 
@@ -54,6 +55,10 @@ async function createMap() {
     await loadNaverMaps();
     $('#map').innerHTML='';
     state.map = new RestaurantMap('map', state.location, id => openDetail(id, {fromMap:true}), mapCoveredHeight);
+    state.map.setSatellite(state.settings.mapType==='satellite');
+    const mapTypeButton=$('#map-type-toggle'),satellite=state.settings.mapType==='satellite';
+    mapTypeButton.classList.toggle('is-satellite',satellite);
+    mapTypeButton.title=satellite?'기본지도로 전환':'실사지도로 전환';mapTypeButton.setAttribute('aria-label',mapTypeButton.title);
     state.map.onViewport=()=>{clearTimeout(viewportTimer);viewportTimer=setTimeout(()=>loadRestaurants(),250);};
     state.map.center(state.location,mapCoveredHeight()); placeOriginMarker(); renderMarkers();
   } catch(error) {
@@ -371,6 +376,12 @@ function bindEvents(){
   $('#location-edit').onclick=()=>{renderSavedLocations();showDialog('#location-dialog')};
   $('#mobile-location').onclick=$('#location-edit').onclick;
   $('#map-my-location').onclick=()=>useCurrentPosition();
+  $('#map-type-toggle').onclick=()=>{
+    const satellite=state.settings.mapType!=='satellite';
+    state.settings.mapType=satellite?'satellite':'normal';persist();state.map?.setSatellite(satellite);
+    const button=$('#map-type-toggle');button.classList.toggle('is-satellite',satellite);
+    const label=satellite?'기본지도로 전환':'실사지도로 전환';button.title=label;button.setAttribute('aria-label',label);
+  };
   $('#location-use-current').onclick=()=>useCurrentPosition();
   $('#search-map-area').onclick=()=>{
     if(!state.map)return toast('지도가 아직 준비되지 않았습니다.');
@@ -398,6 +409,7 @@ function bindEvents(){
   };
   $('#settings-open').onclick=()=>{updateSettingsModal();showDialog('#settings-dialog')};
   $('#settings-footer').onclick=$('#settings-open').onclick;
+  $('#app-install').onclick=requestInstall;
   $('#favorites-only').onchange=e=>{state.favoritesOnly=e.target.checked;renderResults()};
   $('#export-data').onclick=()=>{
     const blob=new Blob([exportArchive()],{type:'application/json;charset=utf-8'});
@@ -423,6 +435,23 @@ function updateSettingsModal(){
   $('#reviews-count').textContent=Object.keys(state.reviews).length;
   $('#favorites-only').checked=state.favoritesOnly;
 }
+function isStandalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}
+function isAndroidWebView(){return /AdMobNative\/1|androidplatform\.net/i.test(navigator.userAgent+location.hostname)}
+function updateInstallEntry(){
+  const button=$('#app-install');if(!button)return;
+  button.hidden=isStandalone()||isAndroidWebView();
+}
+function installGuide(){
+  const ua=navigator.userAgent;
+  if(/iPhone|iPad|iPod/i.test(ua))return 'Safari의 공유 버튼을 누른 뒤 “홈 화면에 추가”를 선택하세요.';
+  if(/SamsungBrowser/i.test(ua))return 'Samsung Internet 메뉴에서 “현재 페이지 추가” → “홈 화면”을 선택하세요.';
+  if(/Android/i.test(ua))return 'Chrome 또는 Edge 메뉴에서 “홈 화면에 추가”를 선택하세요.';
+  return '브라우저 주소창의 설치 아이콘이나 메뉴에서 “홈 화면에 추가”를 선택하세요.';
+}
+async function requestInstall(){
+  if(deferredInstallPrompt){const prompt=deferredInstallPrompt;deferredInstallPrompt=null;await prompt.prompt();await prompt.userChoice;updateInstallEntry();return}
+  $('#install-guide').textContent=installGuide();$('#install-dialog').showModal();
+}
 async function boot(){
   renderChips();createMap();bindEvents();updateLocationLabel();
   $('#sheet').dataset.level='expanded';
@@ -434,8 +463,11 @@ async function boot(){
     const placeId=params.get('place');if(placeId&&state.places.some(p=>p.id===placeId))openDetail(placeId);
   }else await useCurrentPosition(true);
   if('serviceWorker' in navigator && location.protocol==='https:' && !location.hostname.endsWith('androidplatform.net')){
-    navigator.serviceWorker.register('./sw.js?v=20261029d').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js?v=20261119a').catch(()=>{});
   }
+  updateInstallEntry();
 }
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;updateInstallEntry()});
+window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;updateInstallEntry();toast('맛집한눈이 설치되었습니다.')});
 boot().catch(err=>{console.error(err);setLoader(false);toast('앱 초기화에 실패했습니다. 페이지를 새로고침해 주세요.')});
 

@@ -1,1 +1,22 @@
-{"name":"맛집한눈 — 오늘의 한 끼, 고민 끝","short_name":"맛집한눈","description":"내 상황에 맞는 식당을 지도에서 찾고, 개인 방문 기록을 저장합니다.","start_url":"./","scope":"./","display":"standalone","background_color":"#f8f6ef","theme_color":"#195a42","lang":"ko","icons":[{"src":"./assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{
+  "id": "./",
+  "name": "맛집한눈 — 오늘의 한 끼, 고민 끝",
+  "short_name": "맛집한눈",
+  "description": "내 상황에 맞는 식당을 지도에서 찾고, 개인 방문 기록을 저장합니다.",
+  "lang": "ko-KR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f6ef",
+  "theme_color": "#195a42",
+  "launch_handler": {"client_mode": "navigate-existing"},
+  "icons": [
+    {"src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "./assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "내 주변 맛집", "short_name": "주변 맛집", "url": "./?scope=nearby", "icons": [{"src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png"}]},
+    {"name": "내 맛집 기록", "short_name": "내 기록", "url": "./?scope=saved", "icons": [{"src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png"}]}
+  ]
+}
