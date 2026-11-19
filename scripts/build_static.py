@@ -14,7 +14,20 @@ for name in ['index.html','data-status.html','styles.css','app.js','config.js','
  if p.is_dir():shutil.copytree(p,out/name)
  else:shutil.copy2(p,out/name)
 html=(out/'index.html').read_text(encoding='utf-8')
-assets=sorted(set(re.findall(r'(?:src|href)="(\./[^"#]+)',html)))
+assets=set(re.findall(r'(?:src|href)="(\./[^"#]+)',html))
+manifest=json.loads((out/'manifest.webmanifest').read_text(encoding='utf-8'))
+assets.update(icon['src'] for icon in manifest.get('icons',[]))
+for shortcut in manifest.get('shortcuts',[]):assets.update(icon['src'] for icon in shortcut.get('icons',[]))
+pending=[asset for asset in assets if asset.split('?',1)[0].endswith('.js')]
+while pending:
+ source=pending.pop()
+ source_path=out/source.split('?',1)[0].removeprefix('./')
+ for ref in re.findall(r"(?:from\s*|import\s*)['\"]([^'\"]+\.js(?:\?[^'\"]*)?)['\"]",source_path.read_text(encoding='utf-8')):
+  resolved='./'+str((source_path.parent/ref.split('?',1)[0]).resolve().relative_to(out.resolve()))
+  query=('?'+ref.split('?',1)[1]) if '?' in ref else ''
+  resolved+=query
+  if resolved not in assets:assets.add(resolved);pending.append(resolved)
+assets=sorted(assets)
 required=['./','./index.html','./manifest.webmanifest','./data-status.html']
 files=[]
 for item in required+assets:
