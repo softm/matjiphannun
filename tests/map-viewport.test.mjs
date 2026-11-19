@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {RestaurantMap} from '../lib/naver-map.js';
 test('map shows all loaded places inside viewport beyond first 100 and updates on idle',()=>{
  let idle;let west=126,east=128;
@@ -28,4 +29,18 @@ test('map markers use food and density symbols instead of visible numbers',async
  const contents=map.markers.map(marker=>marker.options.icon.content);
  assert.ok(contents.some(content=>content.includes('restaurant-cluster is-dense')&&content.includes('🍽️')));
  assert.ok(contents.every(content=>!/>\d+</.test(content)));
+});
+test('mobile list sheet can fully collapse and exposes a restore button',()=>{
+ const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const js=readFileSync(new URL('../app.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('../styles.css',import.meta.url),'utf8');
+ assert.match(html,/id="sheet-open-button"/);
+ assert.match(js,/pct<12\?'hidden'/);
+ assert.match(js,/Math\.max\(0,startingHeight\+startingY-e\.clientY\)/);
+ assert.match(css,/data-level=hidden/);
+});
+test('current location always requests a fresh position',()=>{
+ const js=readFileSync(new URL('../app.js',import.meta.url),'utf8');
+ assert.match(js,/maximumAge:0/);
+ assert.doesNotMatch(js,/maximumAge:180000/);
 });
