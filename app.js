@@ -191,7 +191,7 @@ async function setLocation(location,{isCurrent=false,suppressReverse=false}={}) 
 function getCurrentPosition() {
   return new Promise((resolve,reject)=>{
     if(!navigator.geolocation){reject(new Error('이 브라우저에서 위치 정보를 사용할 수 없습니다.'));return;}
-    navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:9500,maximumAge:180000});
+    navigator.geolocation.getCurrentPosition(p=>resolve(p.coords),reject,{enableHighAccuracy:true,timeout:12000,maximumAge:0});
   });
 }
 async function useCurrentPosition(silent=false) {
@@ -294,14 +294,20 @@ function renderSavedLocations() {
 function showDialog(selector) {const dialog=$(selector); if(!dialog.open)dialog.showModal();}
 function closeAll() {document.querySelectorAll('dialog[open]').forEach(d=>d.close());}
 function installSheetDrag() {
-  const sheet=$('#sheet'), handle=$('#sheet-handle');
+  const sheet=$('#sheet'), handle=$('#sheet-handle'), openButton=$('#sheet-open-button');
   let startingY=0,startingHeight=0, dragging=false, moved=false;
   const vh=()=>window.innerHeight;
+  const values={hidden:0,compact:27,expanded:54,full:90};
+  function setLevel(level){
+    sheet.style.height='';sheet.dataset.level=level;
+    handle.setAttribute('aria-valuenow',String(values[level]));
+    openButton.setAttribute('aria-expanded',String(level!=='hidden'));
+    openButton.hidden=level!=='hidden';
+    state.map?.resize();
+  }
   function finalize(){
     const pct=Math.round((sheet.getBoundingClientRect().height/vh())*100);
-    sheet.style.height='';sheet.dataset.level=pct<51?'compact':pct<77?'expanded':'full';
-    handle.setAttribute('aria-valuenow',String(pct));
-    state.map?.resize();
+    setLevel(pct<12?'hidden':pct<41?'compact':pct<72?'expanded':'full');
   }
   handle.addEventListener('pointerdown',e=>{
     if(window.innerWidth>850)return;
@@ -312,17 +318,19 @@ function installSheetDrag() {
     if(!dragging)return;
     if(Math.abs(startingY-e.clientY)>8)moved=true;
     if(!moved)return;
-    const next=Math.min(.9*vh(),Math.max(.25*vh(),startingHeight+startingY-e.clientY));
+    const next=Math.min(.9*vh(),Math.max(0,startingHeight+startingY-e.clientY));
     sheet.style.height=`${Math.round(next)}px`;
   });
-  handle.addEventListener('pointerup',()=>{if(!dragging)return;dragging=false;if(!moved){const levels=['compact','expanded','full'];const i=levels.indexOf(sheet.dataset.level);sheet.style.height='';sheet.dataset.level=levels[(i+1)%3];handle.setAttribute('aria-valuenow',String([40,66,90][(i+1)%3]));state.map?.resize();}else finalize()});
+  handle.addEventListener('pointerup',()=>{if(!dragging)return;dragging=false;if(!moved){const levels=['hidden','compact','expanded','full'];const i=levels.indexOf(sheet.dataset.level);setLevel(levels[Math.min(levels.length-1,Math.max(0,i)+1)]);}else finalize()});
   handle.addEventListener('pointercancel',()=>{if(!dragging)return;dragging=false;finalize()});
   handle.addEventListener('keydown',e=>{
     if(!['ArrowUp','ArrowDown','Enter',' '].includes(e.key))return;e.preventDefault();
-    const levels=['compact','expanded','full'],n=levels.indexOf(sheet.dataset.level);
-    const m=e.key==='ArrowDown'?Math.max(0,n-1):Math.min(2,n+1);
-    sheet.style.height='';sheet.dataset.level=levels[m];handle.setAttribute('aria-valuenow',String([40,66,90][m]));state.map?.resize();
+    const levels=['hidden','compact','expanded','full'],n=levels.indexOf(sheet.dataset.level);
+    const m=e.key==='ArrowDown'?Math.max(0,n-1):Math.min(levels.length-1,n+1);
+    setLevel(levels[m]);
   });
+  openButton.addEventListener('click',()=>setLevel('expanded'));
+  setLevel(sheet.dataset.level||'expanded');
 }
 function installDetailDrag() {
   const handle=$('#resize-detail'), dialog=$('#detail-dialog');

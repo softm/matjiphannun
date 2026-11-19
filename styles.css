@@ -48,3 +48,5 @@
 @media(max-width:850px){.content-panel{width:100%;max-width:none}.content-panel .panel-head{padding:0 14px}.brand-title{display:none}.restaurant-list{padding:2px 14px 10px}.content-panel[data-level=compact] .restaurant-card:not(:first-child){display:flex}}
 
 .restaurant-card{height:109px;min-height:109px;max-height:109px;overflow:hidden;margin-bottom:7px}.point-preview{max-height:24px;overflow:hidden}
+.sheet-open-button{display:none}
+@media(max-width:850px){.content-panel[data-level=hidden]{height:0;min-height:0;border-radius:0;box-shadow:none;pointer-events:none}.content-panel[data-level=hidden]>*{visibility:hidden}.sheet-open-button{display:flex;position:absolute;z-index:610;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);min-height:48px;padding:0 18px;border:1px solid #d7e2ce;border-radius:999px;background:#fff;color:var(--green);box-shadow:0 7px 24px #17362e35;font-size:13px;font-weight:800;align-items:center;gap:8px}.sheet-open-button[hidden]{display:none!important}}
